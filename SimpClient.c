@@ -52,7 +52,7 @@ parse_URI(char *uri, char *hostname, int *port, char *identifier)
 	printf("parsing URI\n"); //REMOVE THIS
 	
 	//Set default port
-	*port = 80;
+	*port = DEFAULT_PORT;
 	
 	//CHECK IF WE ARE CONNECTING USING PROPER HTTP PROTOCOL
 	char host_and_port[MAX_STR_LEN];
