@@ -38,7 +38,7 @@ main(int argc, char *argv)
 
 	printf("Open URI:  ");
 	//scanf("%s", uri);
-	strcpy(uri,"https://www.google.com/index.html");
+	strcpy(uri,"http://www.google.com/index.html");
 	
 	parse_URI(uri, hostname, &port, identifier);
 	printf("hostname = \"%s\"\n", hostname);
@@ -46,7 +46,7 @@ main(int argc, char *argv)
 	printf("identifier = \"%s\"\n", identifier);
 
 	sockid = open_connection(hostname, port);
-	//perform_http(sockid, identifier);
+	perform_http(sockid, identifier);
 }
 
 /*------ Parse an "uri" into "hostname" and resource "identifier" --------*/
@@ -76,11 +76,11 @@ perform_http(int sockid, char *identifier)
 	/* connect to server and retrieve response */
 	char recvBuff[MAX_RES_LEN]; memset(recvBuff, '0', sizeof(recvBuff));
 	char *query_get = sprintf(recvBuff, "GET /%s HTTP/1.0\r\n\r\n", identifier);
-	int query_len = strlen(query_get);
+	int query_len = strlen(&query_get);
 
 	int total_sent_len = 0;
 	int sent_len;
-	/*while (total_sent_len < query_len) {
+	while (total_sent_len < query_len) {
 		sent_len = send(sockid, query_get+total_sent_len, query_len-total_sent_len, 0);
 		if (sent_len == -1) {
 			perror("Can't send query");
@@ -92,7 +92,7 @@ perform_http(int sockid, char *identifier)
 	int recv_len;
 	while((recv_len = recv(sockid, recvBuff, MAX_RES_LEN, 0)) > 0) {
 		
-	}*/
+	}
 
 
 	printf("%s\n",recvBuff);
@@ -108,7 +108,6 @@ perform_http(int sockid, char *identifier)
 
 int open_connection(char *hostname, int port)
 {
-
 	int sockfd;
 	/* generate socket
 	 * connect socket to the host address
@@ -116,34 +115,38 @@ int open_connection(char *hostname, int port)
 	
 	//Get IP address if the hostname is a character string
 	struct sockaddr_in server_addr; memset(&server_addr, '0', sizeof(server_addr));
-	struct hostent *server_ent; 
+	struct hostent *server_ent = NULL; 
 
 	printf("Getting hostname\n");
-	if (server_ent = gethostbyname(hostname) < 0 ) {
+	if ( (server_ent = gethostbyname(hostname)) == NULL ) {
 		printf("Error requesting host ip\n");
 		exit(1);
 	}
-	memcpy(&server_addr.sin_addr, server_ent->h_addr, server_ent->h_length);
+	memcpy(&(server_addr.sin_addr), server_ent->h_addr, server_ent->h_length);
+	printf("Copied memory successfully\n");
 	server_addr.sin_family = AF_INET;
 	server_addr.sin_port = htons(port);
 
 	printf("Creating socket\n");
-	if (sockfd = socket(PF_INET,SOCK_STREAM,getprotobyname("tcp")) < 0 ) {
+	if ((sockfd = socket(PF_INET,SOCK_STREAM,getprotobyname("tcp")->p_proto)) < 0 ) {
 		printf("Error creating socket\n");
 		exit(1);
 	}
 	//WE WILL NEED TO BIND THIS LATER?
-	
-	if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-		printf("Error with connect()\n");
-		exit(1);
-	}
 
 	//Convert IP Address and Print it
 	char ip4[15];
 	inet_ntop(AF_INET, &(server_addr.sin_addr), ip4, 15);
 	printf("The ip address of the hostname is %s\n",ip4);
-	printf("The port we are connecting to is %d\n",(int)ntohs(server_addr.sin_port));
+	printf("The port we are connecting to is %d\n",ntohs(server_addr.sin_port));
+
+	printf("Attempting to connect\n");
+	if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+		printf("Error with connect()\n");
+		exit(1);
+	}
+
+	printf("Connected, returning socket\n");
 
 	
 
