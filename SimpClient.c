@@ -138,7 +138,7 @@ int open_connection(char *hostname, int port)
 
 	//printf("Attempting to connect\n");
 	if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-		printf("Error with connect()\n");
+		printf("Error connecting to server()\n");
 		exit(1);
 	}
 

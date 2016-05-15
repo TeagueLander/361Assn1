@@ -3,3 +3,4 @@ http://stackoverflow.com/questions/726122/best-ways-of-parsing-a-url-using-c
 http://coding.debuntu.org/c-linux-socket-programming-tcp-simple-http-client
 http://stackoverflow.com/questions/5444197/converting-host-to-ip-by-sockaddr-in-gethostname-etc
 http://www.linuxhowtos.org/C_C++/socket.htm
+http://stackoverflow.com/questions/3463426/in-c-how-should-i-read-a-text-file-and-print-all-strings
