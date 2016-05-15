@@ -7,6 +7,10 @@
 -------------------------------*/
 #include <stdio.h>
 #include <string.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 
 /* define maximal string and reply length, this is just an example.*/
 /* MAX_RES_LEN should be defined larger (e.g. 4096) in real testing. */
@@ -27,22 +31,21 @@
 
 main(int argc, char *argv)
 {
-    char uri[MAX_STR_LEN];
-    char hostname[MAX_STR_LEN];
-    char identifier[MAX_STR_LEN];
-    int sockid, port;
+	char uri[MAX_STR_LEN];
+	char hostname[MAX_STR_LEN];
+	char identifier[MAX_STR_LEN];
+	int sockid, port;
 
-    printf("Open URI:  ");
-    scanf("%s", uri);
-
-	//printf("%d %d %d", port, *port, &port);
+printf("Open URI:  ");
+scanf("%s", uri);
 	
-    parse_URI(uri, hostname, &port, identifier);
+	parse_URI(uri, hostname, &port, identifier);
 	printf("hostname = \"%s\"\n", hostname);
-    printf("port = \"%d\"\n", port);
-    printf("identifier = \"%s\"\n", identifier);
-    /*sockid = open_connection(hostname, port);
-    perform_http(sockid, identifier);*/
+	printf("port = \"%d\"\n", port);
+	printf("identifier = \"%s\"\n", identifier);
+
+	sockid = open_connection(hostname, port);
+	perform_http(sockid, identifier);
 }
 
 /*------ Parse an "uri" into "hostname" and resource "identifier" --------*/
@@ -58,7 +61,7 @@ parse_URI(char *uri, char *hostname, int *port, char *identifier)
 	char host_and_port[MAX_STR_LEN];
 	sscanf(uri, "http://%120[^/]/%120[^\n]", host_and_port, identifier);
 	sscanf(host_and_port, "%120[^:]:%120d", hostname, port);
-	
+
 	printf("returning parsed URI\n"); //REMOVE THIS
 	return;
 }
@@ -69,9 +72,31 @@ parse_URI(char *uri, char *hostname, int *port, char *identifier)
 *--------------------------------------*/
 perform_http(int sockid, char *identifier)
 {
-  /* connect to server and retrieve response */
+	/* connect to server and retrieve response */
+	char recvBuff[MAX_RES_LEN]; memset(recvBuff, '0', sizeof(recvBuff));
+	char *query_get = sprintf(recvBuff, "GET /%s HTTP/1.0\r\n\r\n", identifier);
+	int query_len = strlen(query_get);
 
-   close(sockid);
+	int total_sent_len = 0;
+	int sent_len;
+	while (total_sent_len < query_len) {
+		sent_len = send(sockid, query_get+total_sent_len, query_len-total_sent_len, 0);
+		if (sent_len == -1) {
+			perror("Can't send query");
+			exit(1);
+		}
+		total_sent_len += sent_len;
+	}
+
+	int recv_len;
+	while((recv_len = recv(sockid, recvBuff, MAX_RES_LEN, 0)) > 0) {
+		
+	}
+
+
+	printf("%s\n",recvBuff);
+
+	close(sockid);
 }
 
 /*---------------------------------------------------------------------------*
@@ -83,9 +108,32 @@ perform_http(int sockid, char *identifier)
 int open_connection(char *hostname, int port)
 {
 
-  int sockfd;
-  /* generate socket
-   * connect socket to the host address
-   */
-  return sockfd;
+	int sockfd;
+	/* generate socket
+	 * connect socket to the host address
+	 */
+	
+	//Get IP address if the hostname is a character string
+	struct sockaddr_in server_addr; memset(&server_addr, '0', sizeof(server_addr));
+	struct hostent *server_ent;
+	server_ent = gethostbyname(hostname);
+	memcpy(&server_addr.sin_addr, server_ent->h_addr, server_ent->h_length);
+	server_addr.sin_family = AF_INET;
+	server_addr.sin_port = htons((uint32_t)port);
+
+	sockfd = socket(PF_INET,SOCK_STREAM,getprotobyname("tcp"));
+	//WE WILL NEED TO BIND THIS LATER?
+	if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+		printf("Error with connect()\n");
+	}
+
+	//Convert IP Address and Print it
+	char ip4[15];
+	inet_ntop(AF_INET, &(server_addr.sin_addr), ip4, 15);
+	printf("The ip address of the hostname is %s\n",ip4);
+	printf("The port we are connecting to is %d\n",(int)ntohs(server_addr.sin_port));
+
+	
+
+	return sockfd;
 }
