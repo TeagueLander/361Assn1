@@ -37,8 +37,8 @@ main(int argc, char *argv)
 	int sockid, port;
 
 	printf("Open URI:  ");
-	//scanf("%s", uri);
-	strcpy(uri,"http://www.google.com/index.html");
+	scanf("%s", uri);
+	//strcpy(uri,"http://www.google.com/index.html");
 	
 	parse_URI(uri, hostname, &port, identifier);
 	printf("hostname = \"%s\"\n", hostname);
