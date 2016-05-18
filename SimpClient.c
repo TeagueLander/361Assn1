@@ -75,30 +75,15 @@ perform_http(int sockid, char *identifier)
 {
 	/* connect to server and retrieve response */
 	char recvBuff[MAX_RES_LEN]; memset(recvBuff, '0', sizeof(recvBuff));
-	char *query_get = sprintf(recvBuff, "GET /%s HTTP/1.0\r\n\r\n", identifier);
-	int query_len = strlen(&query_get);
+	char *query_get = "GET / HTTP/1.0\r\n\r\n";
+	int query_len = strlen(query_get);
 
 	int total_sent_len = 0;
 	int sent_len;
-	
+
 	int n = write(sockid, query_get, query_len);
-	printf("Wrote in\n");
+	printf("Wrote in, wait for response\n");
 	int o = read(sockid, &recvBuff, MAX_RES_LEN);
-
-	/*while (total_sent_len < query_len) {
-		sent_len = send(sockid, query_get+total_sent_len, query_len-total_sent_len, 0);
-		if (sent_len == -1) {
-			perror("Can't send query");
-			exit(1);
-		}
-		total_sent_len += sent_len;
-	}
-
-	int recv_len;
-	while((recv_len = recv(sockid, recvBuff, MAX_RES_LEN, 0)) > 0) {
-		
-	}*/
-
 
 	printf("%s\n",recvBuff);
 
