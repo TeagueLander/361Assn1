@@ -80,8 +80,12 @@ perform_http(int sockid, char *identifier)
 
 	int total_sent_len = 0;
 	int sent_len;
-	//newline
-	while (total_sent_len < query_len) {
+	
+	int n = write(sockid, query_get, query_len);
+	printf("Wrote in\n");
+	int o = read(sockid, &recvBuff, MAX_RES_LEN);
+
+	/*while (total_sent_len < query_len) {
 		sent_len = send(sockid, query_get+total_sent_len, query_len-total_sent_len, 0);
 		if (sent_len == -1) {
 			perror("Can't send query");
@@ -93,7 +97,7 @@ perform_http(int sockid, char *identifier)
 	int recv_len;
 	while((recv_len = recv(sockid, recvBuff, MAX_RES_LEN, 0)) > 0) {
 		
-	}
+	}*/
 
 
 	printf("%s\n",recvBuff);
