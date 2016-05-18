@@ -62,7 +62,7 @@ parse_URI(char *uri, char *hostname, int *port, char *identifier)
 	char host_and_port[MAX_STR_LEN];
 	sscanf(uri, "http://%120[^/]/%120[^\n]", host_and_port, identifier);
 	sscanf(host_and_port, "%120[^:]:%120d", hostname, port);
-
+	
 	printf("returning parsed URI\n"); //REMOVE THIS
 	return;
 }
@@ -80,6 +80,7 @@ perform_http(int sockid, char *identifier)
 
 	int total_sent_len = 0;
 	int sent_len;
+	//newline
 	while (total_sent_len < query_len) {
 		sent_len = send(sockid, query_get+total_sent_len, query_len-total_sent_len, 0);
 		if (sent_len == -1) {
