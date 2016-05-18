@@ -29,16 +29,20 @@
  * don't forget to handle errors
  */
 
-main(int argc, char *argv)
+main(int argc, char *argv[])
 {
+	if (argc != 2) {
+		printf("Error: Wrong number of arguments\nShould take the form 'SimpClient URI'\n");
+	}
+	
 	char uri[MAX_STR_LEN];
 	char hostname[MAX_STR_LEN];
 	char identifier[MAX_STR_LEN];
 	int sockid, port;
 
-	printf("Open URI:  ");
-	scanf("%s", uri);
-	//strcpy(uri,"http://www.google.com/index.html");
+	//printf("Open URI:  ");
+	//scanf("%s", uri);
+	strcpy(uri,argv[1]);
 	
 	parse_URI(uri, hostname, &port, identifier);
 	printf("hostname = \"%s\"\n", hostname);
