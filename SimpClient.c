@@ -110,7 +110,7 @@ int open_connection(char *hostname, int port)
 	 */
 	
 	//Get IP address if the hostname is a character string
-	struct sockaddr_in server_addr; memset(&server_addr, '0', sizeof(server_addr));
+	struct sockaddr_in server_addr; memset(&server_addr, '\0', sizeof(server_addr));
 	struct hostent *server_ent = NULL; 
 
 	printf("Getting hostname\n");

@@ -26,12 +26,17 @@ void cleanExit();
 main(int argc, char *argv)
 {
 	int newsockid; /* return value of the accept() call */
+	int socketfd, port;
+	struct sockaddr_in my_addr, client_addr;
+	memset(&my_addr,'\0', sizeof(my_addr));
+	memset(&client_addr, '\0', sizeof(client_addr));
 	
 
-	while (1)
-	{
-		close(newsockid);
-	}
+	//Open socket and bind.
+	socketfd = socket(AF_INET, SOCK_STREAM, 0);
+
+	close(socketfd);
+
 }
 
 /*---------------------------------------------------------------------------*
