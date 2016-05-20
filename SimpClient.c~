@@ -37,7 +37,7 @@ main(int argc, char *argv[])
 	
 	char uri[MAX_STR_LEN];
 	char hostname[MAX_STR_LEN];
-	char identifier[MAX_STR_LEN]; bzero(&identifier, sizeof(identifier));
+	char identifier[MAX_STR_LEN];
 	int sockid, port;
 
 	//printf("Open URI:  ");
