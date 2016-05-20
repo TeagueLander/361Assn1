@@ -61,7 +61,7 @@ main(int argc, char *argv[])
 
 	//TEMP LINES
 	int comm_fd;  char str[100];
-	comm_fd = accept(socketfd, (struct sockaddr*) NULL, NULL);
+	accept(socketfd, (struct sockaddr*) NULL, NULL);
 	printf("Received");
 
 	while(1)
