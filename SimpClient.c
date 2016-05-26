@@ -9,6 +9,7 @@
 #include <string.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include "util.h"
 
 /* define maximal string and reply length, this is just an example.*/
 /* MAX_RES_LEN should be defined larger (e.g. 4096) in real testing. */
@@ -27,8 +28,7 @@
  * don't forget to handle errors
  */
 
-main(int argc, char *argv[])
-{
+main(int argc, char *argv[]) {
 	if (argc != 2) {
 		printf("Error: Wrong number of arguments\nShould take the form 'SimpClient URI'\n");
 	}
@@ -52,8 +52,7 @@ main(int argc, char *argv[])
 
 /*------ Parse an "uri" into "hostname" and resource "identifier" --------*/
 
-parse_URI(char *uri, char *hostname, int *port, char *identifier)
-{	
+parse_URI(char *uri, char *hostname, int *port, char *identifier) {	
 	//Set default port
 	*port = DEFAULT_PORT;
 	
@@ -73,8 +72,7 @@ parse_URI(char *uri, char *hostname, int *port, char *identifier)
 * connect to a HTTP server using hostname and port,
 * and get the resource specified by identifier
 *--------------------------------------*/
-perform_http(int sockid, char *identifier)
-{
+perform_http(int sockid, char *identifier) {
 	/* connect to server and retrieve response */
 	char recvBuff[MAX_RES_LEN]; memset(recvBuff, '\0', sizeof(recvBuff));
 	char query_get[MAX_STR_LEN]; memset(query_get, '\0', sizeof(query_get));
@@ -123,8 +121,7 @@ perform_http(int sockid, char *identifier)
  *
  *---------------------------------------------------------------------------*/
 
-int open_connection(char *hostname, int port)
-{
+int open_connection(char *hostname, int port) {
 	int sockfd;
 	/* generate socket
 	 * connect socket to the host address
