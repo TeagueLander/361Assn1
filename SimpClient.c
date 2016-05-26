@@ -87,11 +87,11 @@ perform_http(int sockid, char *identifier) {
 		
 	//Perform HTTP Write
 	printf("---Request begin---\n%s\n---Request end---\n",query_get);	
-	int n = write(sockid, query_get, query_len);
+	int n = writen(sockid, query_get, MAX_STR_LEN);
 	printf("HTTP request sent, awaiting response...\n\n");
 	
 	//Wait for HTTP response
-	int o = read(sockid, &recvBuff, MAX_RES_LEN);
+	int o = readn(sockid, &recvBuff, MAX_RES_LEN);
 	
 	//Split HTTP Header and Body
 	char *header = (char *)malloc(MAX_RES_LEN);

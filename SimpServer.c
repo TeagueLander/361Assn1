@@ -67,7 +67,6 @@ main(int argc, char *argv[]) {
 		if ((comm_fd = accept(socketfd, (struct sockaddr*) NULL, NULL)) < 0) {
 			printf("Error accepting socket\n");
 		}
-		printf("hello\n");
 		perform_http(comm_fd);
 		close(comm_fd);
 	}
@@ -99,13 +98,11 @@ perform_http(int sockid) {
 	char str_send_buff[MAX_SEND_LEN]; bzero( str_send_buff, MAX_SEND_LEN);
 	FILE *file_to_send;
 	
-	printf("do a readin\n");
-	if ((read(sockid,str_rec_buff,MAX_REC_LEN)) < 0){
+	if ((readn(sockid,str_rec_buff,MAX_REC_LEN)) < 0){
 		printf("Error reading TCP stream\n");
 		close(sockid);
 		cleanExit();
-	} 
-	printf("readin done\n");
+	}
 
 	//Parse received string;
 	char method[MAX_REC_LEN];
@@ -115,7 +112,7 @@ perform_http(int sockid) {
 	
 	//Ensure the GET method is the one being asked for
 	if (strcmp(method,"GET") != 0) {
-		write(sockid, "HTTP/1.0 501 Not Implemented", MAX_SEND_LEN);
+		writen(sockid, "HTTP/1.0 501 Not Implemented", MAX_SEND_LEN);
 		close(sockid);
 		cleanExit();
 	}
@@ -128,10 +125,10 @@ perform_http(int sockid) {
 		strcpy(str_send_buff, "HTTP/1.0 200 OK\r\n\r\n");
 		int http_len = strlen(str_send_buff);
 		fread(str_send_buff+http_len, 1, MAX_SEND_LEN-http_len, (FILE*)file_to_send);
-		write(sockid, str_send_buff, MAX_SEND_LEN);
+		writen(sockid, str_send_buff, MAX_SEND_LEN);
 		fclose(file_to_send);
 	}else {
-		write(sockid, "HTTP/1.0 404 Not Found", MAX_SEND_LEN);
+		writen(sockid, "HTTP/1.0 404 Not Found", MAX_SEND_LEN);
 		close(sockid);
 		cleanExit();
 	}

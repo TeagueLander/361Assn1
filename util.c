@@ -29,7 +29,6 @@ readn(int sd, char *ptr, int size)
    while (no_left >0)
    {
       no_read = read(sd, ptr, no_left);
-   printf("loop\n");
       if (no_read <0)
          return(no_read);
       if (no_read ==0)
