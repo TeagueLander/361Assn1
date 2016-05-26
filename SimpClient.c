@@ -9,13 +9,11 @@
 #include <string.h>
 #include <netdb.h>
 #include <netinet/in.h>
-//#include <sys/socket.h>
-//#include <sys/types.h>
 
 /* define maximal string and reply length, this is just an example.*/
 /* MAX_RES_LEN should be defined larger (e.g. 4096) in real testing. */
 #define MAX_STR_LEN 120
-#define MAX_RES_LEN 4096
+#define MAX_RES_LEN 300
 
 /* Constants */
 #define DEFAULT_PORT 80
@@ -39,9 +37,8 @@ main(int argc, char *argv[])
 	char hostname[MAX_STR_LEN];
 	char identifier[MAX_STR_LEN]; bzero(&identifier, sizeof(identifier));
 	int sockid, port;
-
-	//printf("Open URI:  ");
-	//scanf("%s", uri);
+	
+	
 	strcpy(uri,argv[1]);
 	
 	parse_URI(uri, hostname, &port, identifier);
@@ -56,15 +53,16 @@ main(int argc, char *argv[])
 /*------ Parse an "uri" into "hostname" and resource "identifier" --------*/
 
 parse_URI(char *uri, char *hostname, int *port, char *identifier)
-{
-	//printf("parsing URI\n"); //REMOVE THIS
-	
+{	
 	//Set default port
 	*port = DEFAULT_PORT;
 	
 	//CHECK IF WE ARE CONNECTING USING PROPER HTTP PROTOCOL
 	char host_and_port[MAX_STR_LEN];
-	sscanf(uri, "http://%120[^/]/%120[^\n]", host_and_port, identifier);
+	char scan_uri_string[MAX_STR_LEN];
+	snprintf(scan_uri_string, MAX_STR_LEN, "http://\%s%d[^/]/\%s%d[^\n]", "%", MAX_STR_LEN, "%", MAX_STR_LEN);
+	sscanf(uri, scan_uri_string, host_and_port, identifier);
+	snprintf(scan_uri_string, MAX_STR_LEN, "%s%d[^:]:%s%dd", "%", MAX_STR_LEN, "%", MAX_STR_LEN);
 	sscanf(host_and_port, "%120[^:]:%120d", hostname, port);
 	
 	//printf("returning parsed URI\n"); //REMOVE THIS
@@ -81,17 +79,31 @@ perform_http(int sockid, char *identifier)
 	char recvBuff[MAX_RES_LEN]; memset(recvBuff, '\0', sizeof(recvBuff));
 	char query_get[MAX_STR_LEN]; memset(query_get, '\0', sizeof(query_get));
 	snprintf(query_get, MAX_STR_LEN, "GET /%s HTTP/1.0\r\n\r\n", identifier);
-	printf("%s\n",query_get);
 	int query_len = strlen(query_get);
 
 	int total_sent_len = 0;
 	int sent_len;
+	
+	char *bodyBuff;
 
+		
+	//Perform HTTP Write
+	printf("---Request begin---\n%s\n---Request end---\n",query_get);	
 	int n = write(sockid, query_get, query_len);
-	//printf("Wrote in, wait for response\n");
+	printf("HTTP request sent, awaiting response...\n\n");
+	
+	//Wait for HTTP response
 	int o = read(sockid, &recvBuff, MAX_RES_LEN);
+	//Split HTTP Header and Body
+	char *header = (char *)malloc(MAX_RES_LEN);
+	char *body = (char *)malloc(MAX_RES_LEN);
+	strcpy(header,recvBuff);
+	body = strstr(recvBuff, "\r\n\r\n")+4;
+	int header_length = strlen(header) - strlen(body);
+	header[header_length-4] = '\0';
+	
 
-	printf("\n%s\n",recvBuff);
+	printf("---Response header---\n%s\n\n---Response body---\n%s\n",header,body);
 
 	close(sockid);
 }
@@ -128,11 +140,10 @@ int open_connection(char *hostname, int port)
 		printf("Error creating socket\n");
 		exit(1);
 	}
-	//WE WILL NEED TO BIND THIS LATER?
 
 	//Convert IP Address and Print it
-	char ip4[15];
-	inet_ntop(AF_INET, &(server_addr.sin_addr), ip4, 15);
+	//char ip4[15];
+	//inet_ntop(AF_INET, &(server_addr.sin_addr), ip4, 15);
 	//printf("The ip address of the hostname is %s\n",ip4);
 	//printf("The port we are connecting to is %d\n",ntohs(server_addr.sin_port));
 
