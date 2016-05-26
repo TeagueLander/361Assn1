@@ -13,7 +13,7 @@
 /* define maximal string and reply length, this is just an example.*/
 /* MAX_RES_LEN should be defined larger (e.g. 4096) in real testing. */
 #define MAX_STR_LEN 120
-#define MAX_RES_LEN 300
+#define MAX_RES_LEN 4096
 
 /* Constants */
 #define DEFAULT_PORT 80
@@ -94,14 +94,23 @@ perform_http(int sockid, char *identifier)
 	
 	//Wait for HTTP response
 	int o = read(sockid, &recvBuff, MAX_RES_LEN);
+	
 	//Split HTTP Header and Body
 	char *header = (char *)malloc(MAX_RES_LEN);
-	char *body = (char *)malloc(MAX_RES_LEN);
+	char *body;
 	strcpy(header,recvBuff);
-	body = strstr(recvBuff, "\r\n\r\n")+4;
-	int header_length = strlen(header) - strlen(body);
-	header[header_length-4] = '\0';
-	
+	header[MAX_RES_LEN] = '\0';
+	//See if we have received the entire HTTP header
+	if (( body = strstr(recvBuff, "\r\n\r\n")) != NULL) {
+		//Mark the end of the header
+		body = body + 4;
+		int header_length = strlen(header) - strlen(body);
+		header[header_length-4] = '\0';
+	}else {
+		//Body is empty
+		body = (char *)malloc(1);
+		strcpy(body, "");
+	}	
 
 	printf("---Response header---\n%s\n\n---Response body---\n%s\n",header,body);
 

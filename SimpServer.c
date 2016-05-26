@@ -63,11 +63,10 @@ main(int argc, char *argv[])
 	//TEMP LINES
 	while (1) {
 		printf("Listening for new connection\n");
-		int comm_fd;
-		/*if ((comm_fd = accept(socketfd, (struct sockaddr*) NULL, NULL)) < 0) {
+		int comm_fd;	
+		if ((comm_fd = accept(socketfd, (struct sockaddr*) NULL, NULL)) < 0) {
 			printf("Error accepting socket\n");
-		}*/	
-		comm_fd = accept(socketfd, (struct sockaddr*) NULL, NULL);	
+		}	
 		printf("Received\n");
 		perform_http(comm_fd);
 		close(comm_fd);
