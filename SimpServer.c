@@ -17,6 +17,7 @@
 
 void cleanExit();
 int socketfd;
+char directory[MAX_REC_LEN];
 
 /*---------------------main() routine--------------------------*
  * tasks for main
@@ -31,7 +32,6 @@ main(int argc, char *argv[])
 	//Declare variables and clear memory where necessary.
 	int newsockid; /* return value of the accept() call */
 	int my_port;
-	char identifier[MAX_REC_LEN];
 
 	struct sockaddr_in my_addr, client_addr;
 	memset(&my_addr,'\0', sizeof(my_addr));
@@ -39,10 +39,10 @@ main(int argc, char *argv[])
 	
 	//Check that we have the proper arguments in the command line
 	if (argc != 3) {
-		printf("Error: Wrong number of arguments\nShould take the form 'SimpServer Port# Identifier'\n");
+		printf("Error: Wrong number of arguments\nShould take the form 'SimpServer Port# Directory'\n");
 	}
 	my_port = atoi(argv[1]);
-	strcpy(identifier,argv[2]);
+	strcpy(directory,argv[2]);
 
 	//Open socket and bind.
 	if ((socketfd = socket(AF_INET, SOCK_STREAM, getprotobyname("tcp")->p_proto)) < 0) {
@@ -66,8 +66,7 @@ main(int argc, char *argv[])
 		int comm_fd;	
 		if ((comm_fd = accept(socketfd, (struct sockaddr*) NULL, NULL)) < 0) {
 			printf("Error accepting socket\n");
-		}	
-		printf("Received\n");
+		}
 		perform_http(comm_fd);
 		close(comm_fd);
 	}
@@ -99,16 +98,30 @@ perform_http(int sockid) {
 	char str_send_buff[MAX_SEND_LEN]; bzero( str_send_buff, MAX_SEND_LEN);
 	FILE *file_to_send;
 	
-	read(sockid,str_rec_buff,100);
-	printf("Echoing back - %s",str_rec_buff);
+	if ((read(sockid,str_rec_buff,100)) < 0){
+		printf("Error reading TCP stream\n");
+		cleanExit();
+	} 
+
+	//Parse received string;
+	char method[MAX_REC_LEN];
+	char request_URI[MAX_REC_LEN];
+	char http_version[MAX_REC_LEN];
+	sscanf(str_rec_buff, "%s %s %s\r\n", method, request_URI, http_version);
+	
+	if (strcmp(method,"GET") != 0) {
+		write(sockid, "HTTP/1.0 501 Not Implemented", MAX_SEND_LEN);
+	}
 
 
-	if ((file_to_send = fopen("web/index.html","r")) != NULL) {
+	char file_location[2*MAX_REC_LEN];
+	snprintf(file_location, MAX_REC_LEN*2, "%s/index.html",directory);
+	if ((file_to_send = fopen(file_location,"r")) != NULL) {
 		fread(str_send_buff, 1, MAX_SEND_LEN, (FILE*)file_to_send);
 		write(sockid, str_send_buff, MAX_SEND_LEN);
 		fclose(file_to_send);
 	}else {
-		printf("File does not exist or could not be opened\n");
+		write(sockid, "HTTP/1.0 404 Not Found", MAX_SEND_LEN);
 	}
 
 

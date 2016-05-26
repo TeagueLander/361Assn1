@@ -63,7 +63,7 @@ parse_URI(char *uri, char *hostname, int *port, char *identifier)
 	snprintf(scan_uri_string, MAX_STR_LEN, "http://\%s%d[^/]/\%s%d[^\n]", "%", MAX_STR_LEN, "%", MAX_STR_LEN);
 	sscanf(uri, scan_uri_string, host_and_port, identifier);
 	snprintf(scan_uri_string, MAX_STR_LEN, "%s%d[^:]:%s%dd", "%", MAX_STR_LEN, "%", MAX_STR_LEN);
-	sscanf(host_and_port, "%120[^:]:%120d", hostname, port);
+	sscanf(host_and_port, scan_uri_string, hostname, port);
 	
 	//printf("returning parsed URI\n"); //REMOVE THIS
 	return;
