@@ -55,9 +55,14 @@ main(int argc, char *argv[]) {
 	my_addr.sin_port = htons(my_port);
 
 	//Bind the socket to our IP
-	bind(socketfd, (struct sockaddr*)&my_addr, sizeof(my_addr));
+	if ((bind(socketfd, (struct sockaddr*)&my_addr, sizeof(my_addr))) < 0) {
+		printf("Error binding socket to port\n");
+		cleanExit();
+	}
 	
-	listen(socketfd,MAX_BACKLOG);
+	if ((listen(socketfd,MAX_BACKLOG)) < 0 ) {
+		printf("Error listening on port %d",my_port);
+	}
 
 	//Wait until there is a connection request to perform HTTP
 	while (1) {
