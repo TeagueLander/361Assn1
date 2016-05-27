@@ -17,17 +17,16 @@
 #define MAX_BACKLOG 10
 
 void cleanExit();
+
 int socketfd;
 char directory[MAX_REC_LEN];
 
 /*---------------------main() routine--------------------------*
  * tasks for main
  * generate socket and get socket id,
- * max number of connection is 3 (maximum length the queue of pending connections may grow to)
  * Accept request from client and generate new socket
  * Communicate with client and close new socket after done
  *---------------------------------------------------------------------------*/
-
 main(int argc, char *argv[]) {
 	//Declare variables and clear memory where necessary.
 	int newsockid; /* return value of the accept() call */
@@ -55,19 +54,19 @@ main(int argc, char *argv[]) {
 	my_addr.sin_addr.s_addr = htons(INADDR_ANY);
 	my_addr.sin_port = htons(my_port);
 
-	//
+	//Bind the socket to our IP
 	bind(socketfd, (struct sockaddr*)&my_addr, sizeof(my_addr));
 	
 	listen(socketfd,MAX_BACKLOG);
 
-	//TEMP LINES
+	//Wait until there is a connection request to perform HTTP
 	while (1) {
-		printf("Listening for new connection\n");
 		int comm_fd;	
 		if ((comm_fd = accept(socketfd, (struct sockaddr*) NULL, NULL)) < 0) {
 			printf("Error accepting socket\n");
+		}else {
+		 perform_http(comm_fd);
 		}
-		perform_http(comm_fd);
 		close(comm_fd);
 	}
 
@@ -80,7 +79,6 @@ main(int argc, char *argv[]) {
  * cleans up opened sockets when killed by a signal.
  *
  *---------------------------------------------------------------------------*/
-
 void cleanExit() {
 	close(socketfd);
 	exit(0);
@@ -91,15 +89,15 @@ void cleanExit() {
  * Accepts a request from "sockid" and sends a response to "sockid".
  *
  *---------------------------------------------------------------------------*/
-
 perform_http(int sockid) {
 
 	char str_rec_buff[MAX_REC_LEN]; bzero( str_rec_buff, MAX_REC_LEN);
 	char str_send_buff[MAX_SEND_LEN]; bzero( str_send_buff, MAX_SEND_LEN);
 	FILE *file_to_send;
 	
+	//Read from the socket
 	if ((readn(sockid,str_rec_buff,MAX_REC_LEN)) < 0){
-		printf("Error reading TCP stream\n");
+		printf("Error reading TCP stream from client\n");
 		close(sockid);
 		cleanExit();
 	}
@@ -110,15 +108,21 @@ perform_http(int sockid) {
 	char http_version[MAX_REC_LEN];
 	sscanf(str_rec_buff, "%s %s %s\r\n", method, request_URI, http_version);
 	
+	//Parse the URI for the requested file
+	char hostname[MAX_REC_LEN];
+	char identifier[MAX_REC_LEN];
+	int port;
+	parse_URI(request_URI, hostname, &port, identifier, MAX_REC_LEN);
+	
 	//Ensure the GET method is the one being asked for
 	if (strcmp(method,"GET") != 0) {
-		writen(sockid, "HTTP/1.0 501 Not Implemented", MAX_SEND_LEN);
-		close(sockid);
-		cleanExit();
+		writen(sockid, "HTTP/1.0 501 Not Implemented\r\n\r\n", MAX_SEND_LEN);
+		return;
 	}
 
+	//Setup the string that gives us the file location
 	char file_location[2*MAX_REC_LEN];
-	snprintf(file_location, MAX_REC_LEN*2, "%s/%s",directory,request_URI);
+	snprintf(file_location, MAX_REC_LEN*2, "%s/%s",directory,identifier);
 	
 	//HTTP Header is built and sent here if file is found
 	if ((file_to_send = fopen(file_location,"r")) != NULL) {
@@ -128,11 +132,9 @@ perform_http(int sockid) {
 		writen(sockid, str_send_buff, MAX_SEND_LEN);
 		fclose(file_to_send);
 	}else {
-		writen(sockid, "HTTP/1.0 404 Not Found", MAX_SEND_LEN);
-		close(sockid);
-		cleanExit();
+		writen(sockid, "HTTP/1.0 404 Not Found\r\n\r\n", MAX_SEND_LEN);
+		return;
 	}
-
 
 }
 

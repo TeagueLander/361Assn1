@@ -31,62 +31,43 @@
 main(int argc, char *argv[]) {
 	if (argc != 2) {
 		printf("Error: Wrong number of arguments\nShould take the form 'SimpClient URI'\n");
+		exit(1);
 	}
 	
 	char uri[MAX_STR_LEN];
-	char hostname[MAX_STR_LEN];
+	char hostname[MAX_STR_LEN]; bzero(&hostname, sizeof(hostname));
 	char identifier[MAX_STR_LEN]; bzero(&identifier, sizeof(identifier));
 	int sockid, port;
 	
 	
 	strcpy(uri,argv[1]);
 	
-	parse_URI(uri, hostname, &port, identifier);
-	//printf("hostname = \"%s\"\n", hostname);
-	//printf("port = \"%d\"\n", port);
-	//printf("identifier = \"%s\"\n", identifier);
+	
+	parse_URI(uri, hostname, &port, identifier, MAX_STR_LEN);
+	if (port == -1) {
+		port = DEFAULT_PORT;
+	}
+	if (strcmp(hostname,"") == 0) {
+		printf("Error: Improper HTTP URI\nShould take the form 'protocol://host[:port]/filepath'\n");
+		exit(1);
+	}
 
 	sockid = open_connection(hostname, port);
-	perform_http(sockid, identifier);
-}
-
-/*------ Parse an "uri" into "hostname" and resource "identifier" --------*/
-
-parse_URI(char *uri, char *hostname, int *port, char *identifier) {	
-	//Set default port
-	*port = DEFAULT_PORT;
-	
-	//CHECK IF WE ARE CONNECTING USING PROPER HTTP PROTOCOL
-	char host_and_port[MAX_STR_LEN];
-	char scan_uri_string[MAX_STR_LEN];
-	snprintf(scan_uri_string, MAX_STR_LEN, "http://\%s%d[^/]/\%s%d[^\n]", "%", MAX_STR_LEN, "%", MAX_STR_LEN);
-	sscanf(uri, scan_uri_string, host_and_port, identifier);
-	snprintf(scan_uri_string, MAX_STR_LEN, "%s%d[^:]:%s%dd", "%", MAX_STR_LEN, "%", MAX_STR_LEN);
-	sscanf(host_and_port, scan_uri_string, hostname, port);
-	
-	//printf("returning parsed URI\n"); //REMOVE THIS
-	return;
+	perform_http(sockid, uri);
 }
 
 /*------------------------------------*
 * connect to a HTTP server using hostname and port,
 * and get the resource specified by identifier
 *--------------------------------------*/
-perform_http(int sockid, char *identifier) {
+perform_http(int sockid, char *uri) {
 	/* connect to server and retrieve response */
 	char recvBuff[MAX_RES_LEN]; memset(recvBuff, '\0', sizeof(recvBuff));
 	char query_get[MAX_STR_LEN]; memset(query_get, '\0', sizeof(query_get));
-	snprintf(query_get, MAX_STR_LEN, "GET /%s HTTP/1.0\r\n\r\n", identifier);
-	int query_len = strlen(query_get);
-
-	int total_sent_len = 0;
-	int sent_len;
 	
-	char *bodyBuff;
-
-		
-	//Perform HTTP Write
-	printf("---Request begin---\n%s\n---Request end---\n",query_get);	
+	//Perform HTTP - Write "GET" request
+	snprintf(query_get, MAX_STR_LEN, "GET %s HTTP/1.0\r\n\r\n", uri);
+	printf("---Request begin---\n%s---Request end---\n",query_get);
 	int n = writen(sockid, query_get, MAX_STR_LEN);
 	printf("HTTP request sent, awaiting response...\n\n");
 	
@@ -120,7 +101,6 @@ perform_http(int sockid, char *identifier) {
  * open_conn() routine. It connects to a remote server on a specified port.
  *
  *---------------------------------------------------------------------------*/
-
 int open_connection(char *hostname, int port) {
 	int sockfd;
 	/* generate socket

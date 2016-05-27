@@ -1,5 +1,5 @@
 /* ------------
-* util.c: used by client.c and server.c 
+* util.c: used by SimpClient.c and SimpServer.c 
 * ---------------*/
 
 /* write "size" bytes of "ptr" to "sd" */
