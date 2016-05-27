@@ -32,11 +32,30 @@ Using SimpClient.c
   Resource Identifier (URI) of the form "protocol://host[:port]/filepath".
   The 'protocol' must be of type 'http' or the URI will not be accepted.
   
-- Examples of running the code: 
-    ~/Assn1 ./SimpClient http://10.10.1.100:2000/index.html
+- Examples of running the client: 
+    ~/Assn1 ./SimpClient http://10.10.1.100:8888/index.html
     ~/Assn1 ./SimpClient http://www.csc.uvic.ca/index.htm
     
 ------------------------------------------------------------------------------------
+
+
+Using SimpServer.c
+----------------------------
+
+- SimpServer.c is an HTTP Server which is able to receive HTTP 1.0 'GET'
+  requests from SimpClient.c and return to the client it's requested file.
+  
+- After the file has been compiled it can be run from the terminal window.
+  This program takes 2 command line arguments which consists of a port number
+  that the server will attempt to listen on and and a directory name which
+  the server will grab files to pass from.
+  
+- Examples of running the server:
+    ~/Assn1 ./SimpServer 8888 web
+    
+------------------------------------------------------------------------------------
+
+
 
 
 
