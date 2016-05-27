@@ -1,5 +1,5 @@
 /*------------------------------
-* server.c
+* SimpServer.c
 * Description: HTTP server program
 * CSC 361
 * Instructor: Kui Wu
@@ -10,6 +10,8 @@
 #include <string.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <sys/utsname.h>
+#include <time.h>
 #include "util.h"
 
 #define MAX_REC_LEN 120		 /* maximum receive message length */
@@ -18,8 +20,8 @@
 
 void cleanExit();
 
-int socketfd;
-char directory[MAX_REC_LEN];
+int socketfd; //Make global so it can be cleaned up by cleanExit();
+char directory[MAX_REC_LEN]; //The directory of the files we will host
 
 /*---------------------main() routine--------------------------*
  * tasks for main
@@ -120,24 +122,39 @@ perform_http(int sockid) {
 	parse_URI(request_URI, hostname, &port, identifier, MAX_REC_LEN);
 	
 	//Ensure the GET method is the one being asked for
-	if (strcmp(method,"GET") != 0) {
+	if ((strcmp(method,"GET") != 0) || (strcmp(http_version,"HTTP/1.0")) ){
 		writen(sockid, "HTTP/1.0 501 Not Implemented\r\n\r\n", MAX_SEND_LEN);
 		return;
 	}
 
-	//Setup the string that gives us the file location
+	//Get System Information
+	struct utsname unameData;
+	uname(&unameData);
+	//Get System Time
+	time_t rawtime;
+	struct tm * timeinfo;
+	time ( &rawtime );
+	timeinfo = localtime ( &rawtime );
+	
+	//Setup the strings that gives us the file location and the system info
 	char file_location[2*MAX_REC_LEN];
 	snprintf(file_location, MAX_REC_LEN*2, "%s/%s",directory,identifier);
-	
+	char server_info[MAX_SEND_LEN];
+	snprintf(server_info, MAX_REC_LEN, "Date: %sServer: %s %s %s\r\n", asctime(timeinfo), unameData.sysname, unameData.nodename, unameData.release);
+
 	//HTTP Header is built and sent here if file is found
 	if ((file_to_send = fopen(file_location,"r")) != NULL) {
-		strcpy(str_send_buff, "HTTP/1.0 200 OK\r\n\r\n");
+		strcpy(str_send_buff, "HTTP/1.0 200 OK\r\n");
+		strcat(str_send_buff, server_info);
+		strcat(str_send_buff, "\r\n");
 		int http_len = strlen(str_send_buff);
 		fread(str_send_buff+http_len, 1, MAX_SEND_LEN-http_len, (FILE*)file_to_send);
 		writen(sockid, str_send_buff, MAX_SEND_LEN);
 		fclose(file_to_send);
 	}else {
-		writen(sockid, "HTTP/1.0 404 Not Found\r\n\r\n", MAX_SEND_LEN);
+		strcpy(str_send_buff, "HTTP/1.0 404 Not Found");
+		strcat(str_send_buff, "\r\n\r\n");
+		writen(sockid, str_send_buff, MAX_SEND_LEN);
 		return;
 	}
 
