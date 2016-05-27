@@ -30,10 +30,10 @@ char directory[MAX_REC_LEN]; //The directory of the files we will host
  * Communicate with client and close new socket after done
  *---------------------------------------------------------------------------*/
 main(int argc, char *argv[]) {
+
 	//Declare variables and clear memory where necessary.
 	int newsockid; /* return value of the accept() call */
 	int my_port;
-
 	struct sockaddr_in my_addr, client_addr;
 	memset(&my_addr,'\0', sizeof(my_addr));
 	memset(&client_addr, '\0', sizeof(client_addr));
@@ -140,20 +140,19 @@ perform_http(int sockid) {
 	char file_location[2*MAX_REC_LEN];
 	snprintf(file_location, MAX_REC_LEN*2, "%s/%s",directory,identifier);
 	char server_info[MAX_SEND_LEN];
-	snprintf(server_info, MAX_REC_LEN, "Date: %sServer: %s %s %s\r\n", asctime(timeinfo), unameData.sysname, unameData.nodename, unameData.release);
+	snprintf(server_info, MAX_REC_LEN, "Date: %sServer: %s %s %s\r\n\r\n", asctime(timeinfo), unameData.sysname, unameData.nodename, unameData.release);
 
 	//HTTP Header is built and sent here if file is found
 	if ((file_to_send = fopen(file_location,"r")) != NULL) {
 		strcpy(str_send_buff, "HTTP/1.0 200 OK\r\n");
 		strcat(str_send_buff, server_info);
-		strcat(str_send_buff, "\r\n");
 		int http_len = strlen(str_send_buff);
 		fread(str_send_buff+http_len, 1, MAX_SEND_LEN-http_len, (FILE*)file_to_send);
 		writen(sockid, str_send_buff, MAX_SEND_LEN);
 		fclose(file_to_send);
 	}else {
 		strcpy(str_send_buff, "HTTP/1.0 404 Not Found");
-		strcat(str_send_buff, "\r\n\r\n");
+		strcat(str_send_buff, server_info);
 		writen(sockid, str_send_buff, MAX_SEND_LEN);
 		return;
 	}
