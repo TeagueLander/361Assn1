@@ -9,8 +9,7 @@
 #include <string.h>
 #include <netdb.h>
 #include <netinet/in.h>
-//#include <sys/socket.h>
-//#include <sys/types.h>
+#include "util.h"
 
 /* define maximal string and reply length, this is just an example.*/
 /* MAX_RES_LEN should be defined larger (e.g. 4096) in real testing. */
@@ -29,69 +28,70 @@
  * don't forget to handle errors
  */
 
-main(int argc, char *argv[])
-{
+main(int argc, char *argv[]) {
 	if (argc != 2) {
 		printf("Error: Wrong number of arguments\nShould take the form 'SimpClient URI'\n");
+		exit(1);
 	}
 	
 	char uri[MAX_STR_LEN];
-	char hostname[MAX_STR_LEN];
-	char identifier[MAX_STR_LEN];
+	char hostname[MAX_STR_LEN]; bzero(&hostname, sizeof(hostname));
+	char identifier[MAX_STR_LEN]; bzero(&identifier, sizeof(identifier));
 	int sockid, port;
-
-	//printf("Open URI:  ");
-	//scanf("%s", uri);
+	
+	
 	strcpy(uri,argv[1]);
 	
-	parse_URI(uri, hostname, &port, identifier);
-	//printf("hostname = \"%s\"\n", hostname);
-	//printf("port = \"%d\"\n", port);
-	//printf("identifier = \"%s\"\n", identifier);
+	
+	parse_URI(uri, hostname, &port, identifier, MAX_STR_LEN);
+	if (port == -1) {
+		port = DEFAULT_PORT;
+	}
+	if (strcmp(hostname,"") == 0) {
+		printf("Error: Improper HTTP URI\nShould take the form 'protocol://host[:port]/filepath'\n");
+		exit(1);
+	}
 
 	sockid = open_connection(hostname, port);
-	perform_http(sockid, identifier);
-}
-
-/*------ Parse an "uri" into "hostname" and resource "identifier" --------*/
-
-parse_URI(char *uri, char *hostname, int *port, char *identifier)
-{
-	//printf("parsing URI\n"); //REMOVE THIS
-	
-	//Set default port
-	*port = DEFAULT_PORT;
-	
-	//CHECK IF WE ARE CONNECTING USING PROPER HTTP PROTOCOL
-	char host_and_port[MAX_STR_LEN];
-	sscanf(uri, "http://%120[^/]/%120[^\n]", host_and_port, identifier);
-	sscanf(host_and_port, "%120[^:]:%120d", hostname, port);
-	
-	//printf("returning parsed URI\n"); //REMOVE THIS
-	return;
+	perform_http(sockid, uri);
 }
 
 /*------------------------------------*
 * connect to a HTTP server using hostname and port,
 * and get the resource specified by identifier
 *--------------------------------------*/
-perform_http(int sockid, char *identifier)
-{
+perform_http(int sockid, char *uri) {
 	/* connect to server and retrieve response */
 	char recvBuff[MAX_RES_LEN]; memset(recvBuff, '\0', sizeof(recvBuff));
 	char query_get[MAX_STR_LEN]; memset(query_get, '\0', sizeof(query_get));
-	snprintf(query_get, MAX_STR_LEN, "GET /%s HTTP/1.0\r\n\r\n", identifier);
-	printf("%s\n",query_get);
-	int query_len = strlen(query_get);
+	
+	//Perform HTTP - Write "GET" request
+	snprintf(query_get, MAX_STR_LEN, "GET %s HTTP/1.1\r\n\r\n", uri);
+	printf("---Request begin---\n%s---Request end---\n",query_get);
+	int n = writen(sockid, query_get, MAX_STR_LEN);
+	printf("HTTP request sent, awaiting response...\n\n");
+	
+	//Wait for HTTP response
+	int o = readn(sockid, &recvBuff, MAX_RES_LEN);
+	
+	//Split HTTP Header and Body
+	char *header = (char *)malloc(MAX_RES_LEN);
+	char *body;
+	strcpy(header,recvBuff);
+	header[MAX_RES_LEN] = '\0';
+	//See if we have received the entire HTTP header
+	if (( body = strstr(recvBuff, "\r\n\r\n")) != NULL) {
+		//Mark the end of the header
+		body = body + 4;
+		int header_length = strlen(header) - strlen(body);
+		header[header_length-4] = '\0';
+	}else {
+		//Body is empty
+		body = (char *)malloc(1);
+		strcpy(body, "");
+	}	
 
-	int total_sent_len = 0;
-	int sent_len;
-
-	int n = write(sockid, query_get, query_len);
-	//printf("Wrote in, wait for response\n");
-	int o = read(sockid, &recvBuff, MAX_RES_LEN);
-
-	printf("\n%s\n",recvBuff);
+	printf("---Response header---\n%s\n\n---Response body---\n%s\n",header,body);
 
 	close(sockid);
 }
@@ -101,9 +101,7 @@ perform_http(int sockid, char *identifier)
  * open_conn() routine. It connects to a remote server on a specified port.
  *
  *---------------------------------------------------------------------------*/
-
-int open_connection(char *hostname, int port)
-{
+int open_connection(char *hostname, int port) {
 	int sockfd;
 	/* generate socket
 	 * connect socket to the host address
@@ -128,17 +126,16 @@ int open_connection(char *hostname, int port)
 		printf("Error creating socket\n");
 		exit(1);
 	}
-	//WE WILL NEED TO BIND THIS LATER?
 
 	//Convert IP Address and Print it
-	char ip4[15];
-	inet_ntop(AF_INET, &(server_addr.sin_addr), ip4, 15);
+	//char ip4[15];
+	//inet_ntop(AF_INET, &(server_addr.sin_addr), ip4, 15);
 	//printf("The ip address of the hostname is %s\n",ip4);
 	//printf("The port we are connecting to is %d\n",ntohs(server_addr.sin_port));
 
 	//printf("Attempting to connect\n");
 	if (connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-		printf("Error with connect()\n");
+		printf("Error connecting to server()\n");
 		exit(1);
 	}
 
